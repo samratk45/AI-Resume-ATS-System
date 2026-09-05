@@ -184,7 +184,7 @@ def extract_text_from_docx(file_data: bytes) -> str:
         return text.strip()
 
     except FileParsingError:
-        raise   # Re-raise unchanged — don't wrap in another FileParsingError
+        raise   
 
     except Exception as e:
         log_error(e, context='extract_text_from_docx')
@@ -218,7 +218,7 @@ def extract_text(file_data:bytes, file_type:str)->str:
 def parse_resume_file(file_data: bytes, filename:str)->Tuple[str, dict]:
     log_info(f'parsing file :{filename}', context='parse_Resume_file')
 
-    #phase01:validate file
+    
     try:
         is_valid, error_msg, file_type=validate_file(file_data, filename)
         if not is_valid:
@@ -234,14 +234,14 @@ def parse_resume_file(file_data: bytes, filename:str)->Tuple[str, dict]:
             'Could not validate the uploaded file. Please ensure it is a valid PDF or DOCX.'
         ) from e
     
-    #phase02: extraction of file
+
 
     try:
         text = extract_text(file_data, file_type)
         log_info(f'Extracted {len(text)} chars from {filename}', context='parse_resume_file')
 
     except FileParsingError:
-        raise   # Re-raise unchanged
+        raise   
 
     except Exception as e:
         log_error(e, context='parse_resume_file_extraction')
