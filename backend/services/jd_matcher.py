@@ -54,18 +54,15 @@ def analyze_skills_gap(
         if 1 <= len(ct.split()) <= 4:
             jd_skills.add(ct)
 
-    # Normalize resume skills for comparison
     resume_normalized = {normalize_skill(s) for s in resume_skills}
 
     gap = []
     for jd_skill in jd_skills:
         jd_norm = normalize_skill(jd_skill)
 
-        # Check canonical match first
         if jd_norm in resume_normalized:
             continue
 
-        # Then try fuzzy match against all resume skills
         best_score = max(
             (fuzz.token_sort_ratio(jd_norm, rs) for rs in resume_normalized),
             default=0,
