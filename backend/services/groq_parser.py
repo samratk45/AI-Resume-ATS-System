@@ -1,26 +1,29 @@
 import os
-import json 
+import json
 import logging
 from typing import Dict
 
 from groq import Groq
 
-logger=logging.getLogger('ats_resume_scorer')
+logger = logging.getLogger('ats_resume_scorer')
 
 
-GROQ_MODEL='llama-3.3-70b-versatile'
+GROQ_MODEL='openai/gpt-oss-120b'
+GROQ_TIMEOUT_SECONDS = 30  
 
-_client=None
+_client = None
 
-def _get_client()->Groq:
+
+def _get_client() -> Groq:
     global _client
     if _client is None:
-        api_key=os.getenv('GROQ_API_KEY')
+        api_key = os.getenv('GROQ_API_KEY')
 
         if not api_key:
             raise ValueError("GROQ_API_KEY environment variable not set")
-        _client=Groq(api_key=api_key)
+        _client = Groq(api_key=api_key)
     return _client
+
 
 RESUME_SYSTEM_PROMPT = (
     "You are a resume parser. Extract information from the resume "
@@ -75,19 +78,22 @@ Important instructions:
 Resume Text:
 {raw_text}"""
 
-def _call_groq(client:Groq, system_prompt:str, user_prompt:str)->str:
 
-    response=client.chat.completions.create(
-        model=GROQ_MODEL, 
+def _call_groq(client: Groq, system_prompt: str, user_prompt: str) -> str:
+
+    response = client.chat.completions.create(
+        model=GROQ_MODEL,
         messages=[
             {'role': 'system', 'content': system_prompt},
             {'role': 'user', 'content': user_prompt}
         ],
         temperature=0.0,
-        max_tokens=4096
+        max_tokens=4096,
+        timeout=GROQ_TIMEOUT_SECONDS,  # NEW
     )
 
     return response.choices[0].message.content.strip()
+
 
 def _try_parse_json(text: str) -> dict | None:
 
@@ -96,7 +102,7 @@ def _try_parse_json(text: str) -> dict | None:
 
         first_newline = cleaned.index("\n") if "\n" in cleaned else len(cleaned)
         cleaned = cleaned[first_newline + 1:]
-       
+
         if cleaned.endswith("```"):
             cleaned = cleaned[:-3]
         cleaned = cleaned.strip()
@@ -105,17 +111,17 @@ def _try_parse_json(text: str) -> dict | None:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         return None
-    
-def parse_resume(raw_text: str)->Dict:
 
-    client=_get_client()
-    prompt=RESUME_USER_PROMPT.format(raw_text=raw_text)
-    raw_response=_call_groq(client, RESUME_SYSTEM_PROMPT, prompt)
-    result=_try_parse_json(raw_response)
 
-    if result is None:
+def parse_resume(raw_text: str) -> Dict:
+
+    client = _get_client()
+    prompt = RESUME_USER_PROMPT.format(raw_text=raw_text)
+    raw_response = _call_groq(client, RESUME_SYSTEM_PROMPT, prompt)
+    result = _try_parse_json(raw_response)
+
+    if result is not None:  # FIXED: was "if result is None", which inverted the logic
         return _validate_resume_result(result)
-    
 
     logger.warning("Groq resume parse: first attempt returned invalid JSON, retrying...")
     strict_prompt = (
@@ -131,7 +137,8 @@ def parse_resume(raw_text: str)->Dict:
     raise ValueError(
         f"Groq returned unparseable response after retry. Raw response:\n{raw_response[:500]}"
     )
-    
+
+
 JD_SYSTEM_PROMPT = (
     "You are a job description parser. Extract information and "
     "return ONLY a valid JSON object. No explanation, no markdown."
@@ -158,6 +165,7 @@ Important instructions:
 Job Description Text:
 {raw_text}"""
 
+
 def parse_job_description(raw_text: str) -> Dict:
     client = _get_client()
     prompt = JD_USER_PROMPT.format(raw_text=raw_text)
@@ -182,8 +190,9 @@ def parse_job_description(raw_text: str) -> Dict:
         f"Groq returned unparseable response after retry. Raw response:\n{raw_response[:500]}"
     )
 
+
 def _validate_jd_result(result: dict) -> dict:
-    
+
     defaults = {
         "job_title": "",
         "required_skills": [],
@@ -223,8 +232,7 @@ def _validate_resume_result(result: dict) -> dict:
     for key, default in defaults.items():
         if key not in result or result[key] is None:
             result[key] = default
-            
-        
+
         if isinstance(default, list) and not isinstance(result[key], list):
             result[key] = default
 
@@ -237,12 +245,10 @@ def _validate_resume_result(result: dict) -> dict:
         exp.setdefault("end_date", "")
         exp.setdefault("duration_months", 0)
         exp.setdefault("description", "")
- 
         try:
             exp["duration_months"] = int(exp["duration_months"])
         except (ValueError, TypeError):
             exp["duration_months"] = 0
-
 
     for proj in result.get("projects", []):
         if not isinstance(proj, dict):

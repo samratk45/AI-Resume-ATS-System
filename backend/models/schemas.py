@@ -35,14 +35,13 @@ class IssueDetail(BaseModel):
     
 
 class AnalysisResponse(BaseModel):
-    ATS_score: float
+    ats_score: float
     component_scores: ComponentScores
     issues_summary: List[str]
     detailed_feedback: List[IssueDetail]
     jd_match_analysis: Optional[JDComparison] = None
     skill_validation_details: Optional[SkillValidationDetails] = None
 
-    ats_score: float
     keyword_match: float = 0.0
     missing_keywords: List[str] = []
     matched_keywords: List[str] = []
@@ -52,4 +51,4 @@ class AnalysisResponse(BaseModel):
     skills: List[str] = []
     jd_comparison: Optional[JDComparison] = None
     warnings: List[str] = []
-    interpretation: str = ""        
+    interpretation: str = ""
