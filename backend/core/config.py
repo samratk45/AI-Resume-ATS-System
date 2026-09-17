@@ -14,7 +14,7 @@ APP_VERSION='1.0.0'
 APP_DESCRIPTION='analyse resumes against job description using nlp + ml'
 
 ALLOWED_ORIGINS = [
-    'https://appapppy-ktwxupi73vqhjzweksze9d.streamlit.app/'
+    'https://appapppy-ktwxupi73vqhjzweksze9d.streamlit.app',
     'http://127.0.0.1:8000',
     'http://localhost:8000',
     'http://localhost:8501',
