@@ -22,3 +22,5 @@ backend/logs/
 # OS files
 .DS_Store
 Thumbs.db
+
+frontend/.streamlit/secrets.toml
