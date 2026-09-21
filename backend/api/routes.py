@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from typing import List, Optional
 from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
@@ -106,7 +107,9 @@ async def analyze_resume(
 
     try:
         from backend.database.supabase_db import save_analysis
-        await save_analysis(user_id, filename, result)
+        await asyncio.wait_for(save_analysis(user_id, filename, result), timeout=10.0)
+    except asyncio.TimeoutError:
+        logger.warning('History save timed out after 10s — continuing without saving')
     except Exception as exc:
         logger.warning(f'History save failed (non-blocking): {exc}')
 

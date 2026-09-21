@@ -42,7 +42,7 @@ async def save_analysis(user_id: str, filename: str, analysis_result: Dict) -> O
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/analyses"
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.post(url, headers=headers, json=doc)
             response.raise_for_status()
             data = response.json()
@@ -64,7 +64,7 @@ async def get_user_history(user_id: str) -> List[Dict]:
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/analyses"
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 url, 
                 headers=headers, 
@@ -103,7 +103,7 @@ async def delete_analysis(analysis_id: str, user_id: str) -> bool:
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/analyses"
     
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.delete(
                 url, 
                 headers=headers, 
