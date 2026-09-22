@@ -12,8 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download spaCy models at build time
-RUN python -m spacy download en_core_web_md && \
-    python -m spacy download en_core_web_sm
+RUN python -m spacy download en_core_web_sm
 
 # Copy the rest of the application
 COPY . .
